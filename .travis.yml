@@ -19,7 +19,8 @@ jobs:
         - zip -r project.zip . -x "*.git*" "*/node_modules/*" "*/vendor/*" "*.zip"
         - |
           RESPONSE=$(curl -X POST             -H "Client-ID: $INTRUCEPT_CLIENT_ID"             -H "Client-Secret: $INTRUCEPT_CLIENT_SECRET"             -F "projectZipFile=@project.zip"             -F "applicationId=$INTRUCEPT_APPLICATION_ID"             -F "scanName=Csharp Dvcsharp SAST Scan - $TRAVIS_COMMIT"             -F "language=c#"             https://appsecops-api.intruceptlabs.com/api/v1/integrations/sast-scans)
-          
+
+          echo $RESPONSE
           VULNS_TABLE=$(echo $RESPONSE | jq -r '.vulnsTable')
           echo "Vulnerabilities Table:"
           echo "$VULNS_TABLE"          
