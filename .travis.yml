@@ -6,11 +6,11 @@ jobs:
   include:
     - stage: SAST Check
       script:
-        - exec 1>/dev/null  # Suppress all command echoing
-        - echo "Preparing for SAST Scan..." >&1
+        - echo "Preparing for SAST Scan..."
         - zip -r project.zip . -x "*.git*" "*/node_modules/*" "*/vendor/*" "*.zip" > /dev/null 2>&1
-        - echo "Initiating SAST scan. This may take a few minutes..." >&1
+        - echo "Initiating SAST scan. This may take a few minutes..."
         - |
+          set +e
           RESPONSE=$(curl -s -X POST \
             -H "Client-ID: $INTRUCEPT_CLIENT_ID" \
             -H "Client-Secret: $INTRUCEPT_CLIENT_SECRET" \
@@ -19,23 +19,24 @@ jobs:
             -F "scanName=Csharp Dvcsharp SAST Scan - $TRAVIS_COMMIT" \
             -F "language=c#" \
             https://appsecops-api.intruceptlabs.com/api/v1/integrations/sast-scans)
-
+          
           if [ -z "$RESPONSE" ]; then
-            echo "Error: Empty response received from SAST scan API" >&1
+            echo "Error: Empty response received from SAST scan API"
             exit 1
           fi
 
           VULNS_TABLE=$(echo "$RESPONSE" | jq -r '.vulnsTable // "No vulnerabilities found"')
-          echo "Vulnerabilities Table:" >&1
-          echo "$VULNS_TABLE" >&1
+          echo "Vulnerabilities Table:"
+          echo "$VULNS_TABLE"
+          set -e
 
     - stage: SCA Check
       script:
-        - exec 1>/dev/null  # Suppress all command echoing
-        - echo "Preparing for SCA Scan..." >&1
+        - echo "Preparing for SCA Scan..."
         - zip -r project.zip . -x "*.git*" "*/node_modules/*" "*/vendor/*" "*.zip" > /dev/null 2>&1
-        - echo "Initiating SCA scan. This may take a few minutes..." >&1
+        - echo "Initiating SCA scan. This may take a few minutes..."
         - |
+          set +e
           RESPONSE=$(curl -s -X POST \
             -H "Client-ID: $INTRUCEPT_CLIENT_ID" \
             -H "Client-Secret: $INTRUCEPT_CLIENT_SECRET" \
@@ -46,10 +47,11 @@ jobs:
             https://appsecops-api.intruceptlabs.com/api/v1/integrations/sca-scans)
 
           if [ -z "$RESPONSE" ]; then
-            echo "Error: Empty response received from SCA scan API" >&1
+            echo "Error: Empty response received from SCA scan API"
             exit 1
           fi
 
           VULNS_TABLE=$(echo "$RESPONSE" | jq -r '.vulnsTable // "No vulnerabilities found"')
-          echo "Vulnerabilities Table:" >&1
-          echo "$VULNS_TABLE" >&1
+          echo "Vulnerabilities Table:"
+          echo "$VULNS_TABLE"
+          set -e
