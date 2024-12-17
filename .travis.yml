@@ -7,10 +7,8 @@ jobs:
     - stage: SAST Check
       script:
         - echo "Preparing for SAST Scan..."
-        - zip -r project.zip . -x "*.git*" "*/node_modules/*" "*/vendor/*" "*.zip" > /dev/null 2>&1
-        - echo "Initiating SAST scan. This may take a few minutes..."
+        - echo "Initiating SAST scan. Please wait..."
         - |
-          set +e
           RESPONSE=$(curl -s -X POST \
             -H "Client-ID: $INTRUCEPT_CLIENT_ID" \
             -H "Client-Secret: $INTRUCEPT_CLIENT_SECRET" \
@@ -20,20 +18,16 @@ jobs:
             -F "language=c#" \
             https://appsecops-api.intruceptlabs.com/api/v1/integrations/sast-scans)
           
-          echo "SAST Scan completed. Analyzing results..."
+          echo "SAST scan completed."
           VULNS_TABLE=$(echo "$RESPONSE" | jq -r '.vulnsTable')
           echo "Vulnerabilities Table:"
           echo "$VULNS_TABLE"
-          
-          set -e
 
     - stage: SCA Check
       script:
         - echo "Preparing for SCA Scan..."
-        - zip -r project.zip . -x "*.git*" "*/node_modules/*" "*/vendor/*" "*.zip" > /dev/null 2>&1
-        - echo "Initiating SCA scan. This may take a few minutes..."
+        - echo "Initiating SCA scan. Please wait..."
         - |
-          set +e
           RESPONSE=$(curl -s -X POST \
             -H "Client-ID: $INTRUCEPT_CLIENT_ID" \
             -H "Client-Secret: $INTRUCEPT_CLIENT_SECRET" \
@@ -43,9 +37,7 @@ jobs:
             -F "language=c#" \
             https://appsecops-api.intruceptlabs.com/api/v1/integrations/sca-scans)
           
-          echo "SCA Scan completed. Analyzing results..."
+          echo "SCA scan completed."
           VULNS_TABLE=$(echo "$RESPONSE" | jq -r '.vulnsTable')
           echo "Vulnerabilities Table:"
           echo "$VULNS_TABLE"
-          
-          set -e
