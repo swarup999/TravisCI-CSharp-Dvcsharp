@@ -10,6 +10,17 @@ jobs:
         - zip -r project.zip . -x "*.git*" "*/node_modules/*" "*/vendor/*" "*.zip" > /dev/null 2>&1
         - echo "Initiating SAST scan. This may take a few minutes..."
         - |
+          # Start progress indicator in the background
+          show_progress() {
+            while true; do
+              echo -n "." >&1
+              sleep 1
+            done
+          }
+
+          show_progress &  # Run the progress function in the background
+          PROGRESS_PID=$!   # Capture the process ID to stop it later
+        - |
           set +e
           RESPONSE=$(curl -s -X POST \
             -H "Client-ID: $INTRUCEPT_CLIENT_ID" \
@@ -19,6 +30,10 @@ jobs:
             -F "scanName=Csharp Dvcsharp SAST Scan - $TRAVIS_COMMIT" \
             -F "language=c#" \
             https://appsecops-api.intruceptlabs.com/api/v1/integrations/sast-scans)
+
+          # Stop the progress indicator
+          kill $PROGRESS_PID
+          echo ""  # Move to a new line
           
           if [ -z "$RESPONSE" ]; then
             echo "Error: Empty response received from SAST scan API"
