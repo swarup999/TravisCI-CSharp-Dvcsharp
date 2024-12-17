@@ -29,7 +29,17 @@ jobs:
           CAN_PROCEED=$(echo $RESPONSE | jq -r '.canProceed')
           VULNS_TABLE=$(echo $RESPONSE | jq -r '.vulnsTable')
           echo "Vulnerabilities Table:"
-          echo "$VULNS_TABLE"
+          # Try multiple methods to extract vulnerabilities table
+          VULNS_TABLE=$(echo $RESPONSE | jq -r '.vulnsTable // empty')
+          
+          if [ -z "$VULNS_TABLE" ]; then
+            VULNS_TABLE=$(echo $RESPONSE | jq -r '.vulnerabilitiesTable // empty')
+          fi
+          
+          # If still empty, try parsing differently
+          if [ -z "$VULNS_TABLE" ]; then
+            VULNS_TABLE=$(echo $RESPONSE | jq -r 'to_entries | map("\(.key): \(.value)") | join("\n")')
+          fi
           
           if [ "$CAN_PROCEED" != "true" ]; then
             echo "SCA scan failed. Please review the dependency issues."
