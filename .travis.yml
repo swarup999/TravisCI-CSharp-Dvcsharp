@@ -7,8 +7,10 @@ jobs:
     - stage: SAST Check
       script:
         - echo "Preparing for SAST Scan..."
-        - echo "Initiating SAST scan. Please wait..."
+        - zip -r project.zip . -x "*.git*" "*/node_modules/*" "*/vendor/*" "*.zip" > /dev/null 2>&1
+        - echo "Initiating SAST scan. This may take a few minutes..."
         - |
+          set +e
           RESPONSE=$(curl -s -X POST \
             -H "Client-ID: $INTRUCEPT_CLIENT_ID" \
             -H "Client-Secret: $INTRUCEPT_CLIENT_SECRET" \
@@ -18,16 +20,36 @@ jobs:
             -F "language=c#" \
             https://appsecops-api.intruceptlabs.com/api/v1/integrations/sast-scans)
           
-          echo "SAST scan completed."
-          VULNS_TABLE=$(echo "$RESPONSE" | jq -r '.vulnsTable')
+          echo "SAST Scan completed. Analyzing results..."
+          
+          # Debug: Print raw response if it's empty
+          if [ -z "$RESPONSE" ]; then
+            echo "Error: Empty response received from SAST scan API"
+            exit 1
+          fi
+          
+          # Try multiple ways to extract vulnerabilities
+          VULNS_TABLE=$(echo "$RESPONSE" | jq -r '.vulnsTable // empty')
+          
+          if [ -z "$VULNS_TABLE" ]; then
+            echo "Error: Unable to extract vulnerabilities table"
+            echo "Raw Response:"
+            echo "$RESPONSE"
+            exit 1
+          fi
+          
           echo "Vulnerabilities Table:"
           echo "$VULNS_TABLE"
+          
+          set -e
 
     - stage: SCA Check
       script:
         - echo "Preparing for SCA Scan..."
-        - echo "Initiating SCA scan. Please wait..."
+        - zip -r project.zip . -x "*.git*" "*/node_modules/*" "*/vendor/*" "*.zip" > /dev/null 2>&1
+        - echo "Initiating SCA scan. This may take a few minutes..."
         - |
+          set +e
           RESPONSE=$(curl -s -X POST \
             -H "Client-ID: $INTRUCEPT_CLIENT_ID" \
             -H "Client-Secret: $INTRUCEPT_CLIENT_SECRET" \
@@ -37,7 +59,25 @@ jobs:
             -F "language=c#" \
             https://appsecops-api.intruceptlabs.com/api/v1/integrations/sca-scans)
           
-          echo "SCA scan completed."
-          VULNS_TABLE=$(echo "$RESPONSE" | jq -r '.vulnsTable')
+          echo "SCA Scan completed. Analyzing results..."
+          
+          # Debug: Print raw response if it's empty
+          if [ -z "$RESPONSE" ]; then
+            echo "Error: Empty response received from SCA scan API"
+            exit 1
+          fi
+          
+          # Try multiple ways to extract vulnerabilities
+          VULNS_TABLE=$(echo "$RESPONSE" | jq -r '.vulnsTable // empty')
+          
+          if [ -z "$VULNS_TABLE" ]; then
+            echo "Error: Unable to extract vulnerabilities table"
+            echo "Raw Response:"
+            echo "$RESPONSE"
+            exit 1
+          fi
+          
           echo "Vulnerabilities Table:"
           echo "$VULNS_TABLE"
+          
+          set -e
